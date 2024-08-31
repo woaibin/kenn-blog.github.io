@@ -13,12 +13,12 @@
 <meta property="og:site_name" content="BNeverSoft的博客">
 <meta property="og:description" content="ffmpeg源码解析本专栏分模块去讲解ffmpeg的源码，对于每个模块，先从宏观入手，再从值得深入的子模块进行微观分析。 1. ffmpeg main函数解析：ffmpeg的main函数就是它的宏观主流程看着非常简单，主要如下：   2. 命令行解析模块从主流程图可以看出，在ffmpeg main 函数中第一个做的事情就是解析命令行。           具体结构体解析     123456789">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="https://github.com/woaibin/woaibin.github.io/blob/main/1.png?raw=true">
+<meta property="og:image" content="https://raw.githubusercontent.com/woaibin/xiaokangres/main/1.png">
 <meta property="article:published_time" content="2024-08-31T17:06:23.424Z">
-<meta property="article:modified_time" content="2024-08-31T17:21:53.378Z">
+<meta property="article:modified_time" content="2024-08-31T17:33:24.019Z">
 <meta property="article:author" content="Kenn Bin">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://github.com/woaibin/woaibin.github.io/blob/main/1.png?raw=true">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/woaibin/xiaokangres/main/1.png">
   
     <link rel="alternate" href="/atom.xml" title="BNeverSoft的博客" type="application/atom+xml">
   
@@ -91,7 +91,7 @@
       
         <h1 id="ffmpeg源码解析"><a href="#ffmpeg源码解析" class="headerlink" title="ffmpeg源码解析"></a>ffmpeg源码解析</h1><p>本专栏分模块去讲解ffmpeg的源码，对于每个模块，先从宏观入手，再从值得深入的子模块进行微观分析。</p>
 <h2 id="1-ffmpeg-main函数解析："><a href="#1-ffmpeg-main函数解析：" class="headerlink" title="1. ffmpeg main函数解析："></a>1. ffmpeg main函数解析：</h2><p>ffmpeg的main函数就是它的宏观主流程看着非常简单，主要如下：</p>
-<img src="https://github.com/woaibin/woaibin.github.io/blob/main/1.png?raw=true" alt="QQ_1725120393334" style="zoom: 33%;" />
+<img src="https://raw.githubusercontent.com/woaibin/xiaokangres/main/1.png" alt="QQ_1725120393334" style="zoom: 33%;" />
 
 <h2 id="2-命令行解析模块"><a href="#2-命令行解析模块" class="headerlink" title="2. 命令行解析模块"></a>2. 命令行解析模块</h2><p>从主流程图可以看出，在ffmpeg main 函数中第一个做的事情就是解析命令行。</p>
 <details>
@@ -100,6 +100,7 @@
   </summary>
 
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 参数解析Context</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> <span class="title class_">OptionParseContext</span> &#123;</span><br><span class="line">    OptionGroup global_opts;<span class="comment">//全局参数，如--version， --loglevel等</span></span><br><span class="line">    OptionGroupList *groups; <span class="comment">//参数组</span></span><br><span class="line">    <span class="type">int</span>           nb_groups; <span class="comment">//参数组个数</span></span><br><span class="line">&#125; OptionParseContext;</span><br><span class="line"> </span><br><span class="line"><span class="comment">// 参数组：</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> <span class="title class_">OptionGroup</span> &#123;</span><br><span class="line">    <span class="type">const</span> OptionGroupDef *group_def; <span class="comment">// 参数组信息，如参数组名称等</span></span><br><span class="line">    <span class="type">const</span> <span class="type">char</span> *arg; <span class="comment">// 命令行中的原始字符串值</span></span><br><span class="line"></span><br><span class="line">    Option *opts; <span class="comment">// 参数数组</span></span><br><span class="line">    <span class="type">int</span>  nb_opts;</span><br><span class="line"></span><br><span class="line">    AVDictionary *codec_opts; <span class="comment">// 编解码参数</span></span><br><span class="line">    AVDictionary *format_opts; <span class="comment">// 复用解复用参数</span></span><br><span class="line">    AVDictionary *sws_dict; <span class="comment">// sws scale参数</span></span><br><span class="line">    AVDictionary *swr_opts; <span class="comment">// swr 重采样参数</span></span><br><span class="line">&#125; OptionGroup;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 参数</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> <span class="title class_">Option</span> &#123;</span><br><span class="line">    <span class="type">const</span> OptionDef  *opt;</span><br><span class="line">    <span class="type">const</span> <span class="type">char</span>       *key;</span><br><span class="line">    <span class="type">const</span> <span class="type">char</span>       *val;</span><br><span class="line">&#125; Option;</span><br></pre></td></tr></table></figure>
+</details>
       
     </div>
     <footer class="article-footer">
